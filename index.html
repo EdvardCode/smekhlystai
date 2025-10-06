@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Смехлыст</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 { font-size: 4em; margin-bottom: 30px; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); }
+        button {
+            background: #ff6b6b;
+            border: none;
+            color: white;
+            padding: 20px 40px;
+            font-size: 1.5em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: scale(1.1); }
+        .hidden { display: none; }
+        .player-list {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .player {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            display: inline-block;
+            min-width: 150px;
+        }
+        input {
+            padding: 15px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 5px;
+            margin: 10px;
+            width: 300px;
+        }
+        .question {
+            font-size: 2em;
+            background: rgba(0,0,0,0.3);
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .answer-card {
+            background: #ffd93d;
+            color: #333;
+            padding: 20px;
+            margin: 15px;
+            border-radius: 10px;
+            font-size: 1.3em;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .answer-card:hover { transform: scale(1.05); }
+        .score {
+            font-size: 1.5em;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- МЕНЮ -->
+        <div id="menu" class="screen">
+            <h1>🎭 СМЕХЛЫСТ</h1>
+            <button onclick="showLobby()">Начать игру</button>
+            <button onclick="showRules()">Правила</button>
+        </div>
+
+        <!-- ПРАВИЛА -->
+        <div id="rules" class="screen hidden">
+            <h2>Правила игры</h2>
+            <p style="margin: 20px; font-size: 1.2em;">
+                1. Все игроки вводят свои имена<br>
+                2. На экране появляется вопрос<br>
+                3. Каждый придумывает смешной ответ<br>
+                4. Все голосуют за лучшие ответы<br>
+                5. Побеждает самый смешной!
+            </p>
+            <button onclick="showMenu()">Назад</button>
+        </div>
+
+        <!-- ЛОББИ -->
+        <div id="lobby" class="screen hidden">
+            <h2>Присоединение игроков</h2>
+            <div class="player-list" id="playerList">
+                <p>Ждём игроков...</p>
+            </div>
+            <input type="text" id="playerName" placeholder="Введите имя">
+            <br>
+            <button onclick="addPlayer()">Присоединиться</button>
+            <button onclick="startGame()" id="startBtn" style="background: #51cf66;">Начать игру</button>
+            <button onclick="showMenu()">Выход</button>
+        </div>
+
+        <!-- ИГРА -->
+        <div id="game" class="screen hidden">
+            <div class="question" id="question"></div>
+            <input type="text" id="answerInput" placeholder="Ваш смешной ответ">
+            <br>
+            <button onclick="submitAnswer()">Отправить</button>
+        </div>
+
+        <!-- ГОЛОСОВАНИЕ -->
+        <div id="voting" class="screen hidden">
+            <h2>Голосуйте за лучший ответ!</h2>
+            <div class="question" id="votingQuestion"></div>
+            <div id="answersContainer"></div>
+        </div>
+
+        <!-- РЕЗУЛЬТАТЫ -->
+        <div id="results" class="screen hidden">
+            <h1>🏆 Результаты</h1>
+            <div id="scoreBoard"></div>
+            <button onclick="nextRound()">Следующий раунд</button>
+            <button onclick="showMenu()">В меню</button>
+        </div>
+    </div>
+
+    <script>
+        let players = [];
+        let currentQuestion = 0;
+        let answers = [];
+        let scores = {};
+        
+        const questions = [
+            "Худший подарок на день рождения?",
+            "Что бы вы крикнули, прыгая с парашютом?",
+            "Название вашей автобиографии?",
+            "Последние слова супергероя?",
+            "Худший рекламный слоган?",
+            "Что написано на вашей футболке?",
+            "Новое название для понедельника?"
+        ];
+
+        function showMenu() {
+            hideAllScreens();
+            document.getElementById('menu').classList.remove('hidden');
+        }
+
+        function showRules() {
+            hideAllScreens();
+            document.getElementById('rules').classList.remove('hidden');
+        }
+
+        function showLobby() {
+            hideAllScreens();
+            document.getElementById('lobby').classList.remove('hidden');
+            updatePlayerList();
+        }
+
+        function hideAllScreens() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        }
+
+        function addPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            if (name && !players.includes(name)) {
+                players.push(name);
+                scores[name] = 0;
+                document.getElementById('playerName').value = '';
+                updatePlayerList();
+            }
+        }
+
+        function updatePlayerList() {
+            const list = document.getElementById('playerList');
+            if (players.length === 0) {
+                list.innerHTML = '<p>Ждём игроков...</p>';
+            } else {
+                list.innerHTML = players.map(p => 
+                    `<div class="player">👤 ${p}</div>`
+                ).join('');
+            }
+        }
+
+        function startGame() {
+            if (players.length < 2) {
+                alert('Нужно минимум 2 игрока!');
+                return;
+            }
+            hideAllScreens();
+            document.getElementById('game').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestion % questions.length];
+            document.getElementById('question').textContent = question;
+            answers = [];
+        }
+
+        function submitAnswer() {
+            const answer = document.getElementById('answerInput').value.trim();
+            if (answer) {
+                answers.push(answer);
+                document.getElementById('answerInput').value = '';
+                
+                if (answers.length >= players.length) {
+                    showVoting();
+                } else {
+                    alert(`Ответ принят! (${answers.length}/${players.length})`);
+                }
+            }
+        }
+
+        function showVoting() {
+            hideAllScreens();
+            document.getElementById('voting').classList.remove('hidden');
+            const question = questions[currentQuestion % questions.length];
+            document.getElementById('votingQuestion').textContent = question;
+            
+            const container = document.getElementById('answersContainer');
+            container.innerHTML = answers.map((answer, index) => 
+                `<div class="answer-card" onclick="vote(${index})">${answer}</div>`
+            ).join('');
+        }
+
+        function vote(index) {
+            // Простое голосование - можно усложнить
+            const randomPlayer = players[Math.floor(Math.random() * players.length)];
+            scores[randomPlayer] += 100;
+            showResults();
+        }
+
+        function showResults() {
+            hideAllScreens();
+            document.getElementById('results').classList.remove('hidden');
+            
+            const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+            document.getElementById('scoreBoard').innerHTML = sorted.map((entry, index) => 
+                `<div class="score">${index + 1}. ${entry[0]}: ${entry[1]} 🏆</div>`
+            ).join('');
+        }
+
+        function nextRound() {
+            currentQuestion++;
+            if (currentQuestion >= questions.length) {
+                alert('Игра окончена!');
+                showMenu();
+                players = [];
+                scores = {};
+                currentQuestion = 0;
+            } else {
+                hideAllScreens();
+                document.getElementById('game').classList.remove('hidden');
+                showQuestion();
+            }
+        }
+
+        // Enter для отправки
+        document.getElementById('playerName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addPlayer();
+        });
+        
+        document.getElementById('answerInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitAnswer();
+        });
+    </script>
+</body>
+</html>

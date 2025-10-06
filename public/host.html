@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Смехлыст - Главный экран</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="host-body">
+    <!-- Анимированный фон -->
+    <div class="animated-bg">
+        <div class="bg-shape shape-1"></div>
+        <div class="bg-shape shape-2"></div>
+        <div class="bg-shape shape-3"></div>
+        <div class="bg-shape shape-4"></div>
+    </div>
+
+    <!-- ГЛАВНОЕ МЕНЮ -->
+    <div id="menu" class="screen active">
+        <div class="menu-content">
+            <div class="logo-animation">
+                <div class="logo-circle"></div>
+                <h1 class="game-title">
+                    <span class="title-icon">🎭</span>
+                    <span class="title-text">СМЕХЛЫСТ</span>
+                </h1>
+                <p class="game-subtitle">Битва острословов</p>
+            </div>
+            
+            <div class="menu-buttons-container">
+                <button class="mega-button primary-btn" onclick="createGame()">
+                    <span class="btn-bg"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">🎮</span>
+                        <span class="btn-text">Создать игру</span>
+                    </span>
+                </button>
+            </div>
+
+            <div class="menu-footer">
+                <div class="info-badge">
+                    <span class="badge-icon">👥</span>
+                    <span>2-8 игроков</span>
+                </div>
+                <div class="info-badge">
+                    <span class="badge-icon">⏱️</span>
+                    <span>10-15 минут</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ЛОББИ -->
+    <div id="lobby" class="screen">
+        <div class="lobby-content">
+            <div class="lobby-header">
+                <h2 class="screen-title pulse-animation">Присоединяйтесь к игре!</h2>
+            </div>
+
+            <div class="room-code-display">
+                <div class="code-label">Код комнаты:</div>
+                <div class="code-value" id="roomCode">----</div>
+                <div class="code-hint">Введите код на телефоне</div>
+            </div>
+
+            <div class="players-container">
+                <div class="players-header">
+                    <h3>Игроки (<span id="playerCount">0</span>/8)</h3>
+                </div>
+                <div class="players-grid" id="playersGrid">
+                    <div class="waiting-player">
+                        <div class="waiting-icon">⏳</div>
+                        <div class="waiting-text">Ожидание игроков...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lobby-actions">
+                <button class="mega-button success-btn" id="startGameBtn" onclick="startGame()" disabled>
+                    <span class="btn-bg"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">▶️</span>
+                        <span class="btn-text">Начать игру</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ИГРА - ВОПРОС -->
+    <div id="question" class="screen">
+        <div class="game-content">
+            <div class="round-badge">
+                <span>Раунд <span id="currentRound">1</span>/<span id="totalRounds">7</span></span>
+            </div>
+
+            <div class="question-display">
+                <div class="question-card-big">
+                    <div class="question-decoration">
+                        <span class="q-mark">?</span>
+                    </div>
+                    <h2 class="question-text" id="questionText"></h2>
+                </div>
+            </div>
+
+            <div class="answer-progress">
+                <div class="progress-label">Ответили игроков:</div>
+                <div class="progress-numbers">
+                    <span id="answeredCount">0</span>/<span id="totalPlayers">0</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="answerProgressBar"></div>
+                </div>
+                <div class="progress-players" id="answeredPlayers"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ГОЛОСОВАНИЕ -->
+    <div id="voting" class="screen">
+        <div class="game-content">
+            <h2 class="screen-title vote-title">
+                <span class="vote-icon">🗳️</span>
+                Голосуйте!
+            </h2>
+
+            <div class="question-card-small">
+                <p id="votingQuestion"></p>
+            </div>
+
+            <div class="answers-showcase" id="answersShowcase"></div>
+
+            <div class="vote-counter">
+                <div class="vote-label">Проголосовало:</div>
+                <div class="vote-numbers">
+                    <span id="votedCount">0</span>/<span id="totalVoters">0</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill rainbow" id="voteProgressBar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- РЕЗУЛЬТАТЫ РАУНДА -->
+    <div id="results" class="screen">
+        <div class="game-content">
+            <h2 class="screen-title">
+                <span class="trophy-spin">🏆</span>
+                Результаты раунда
+            </h2>
+
+            <div class="results-podium" id="resultsPodium"></div>
+
+            <button class="mega-button primary-btn" onclick="nextRound()">
+                <span class="btn-bg"></span>
+                <span class="btn-content">
+                    <span class="btn-icon">➡️</span>
+                    <span class="btn-text">Следующий раунд</span>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ФИНАЛ -->
+    <div id="final" class="screen">
+        <div class="game-content">
+            <h2 class="screen-title celebration">
+                <span class="confetti">🎉</span>
+                Игра окончена!
+                <span class="confetti">🎊</span>
+            </h2>
+
+            <div class="final-podium" id="finalPodium"></div>
+
+            <div class="final-actions">
+                <button class="mega-button primary-btn" onclick="location.reload()">
+                    <span class="btn-bg"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">Новая игра</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let roomCode = null;
+
+        // Создание игры
+        function createGame() {
+            socket.emit('createGame');
+        }
+
+        socket.on('gameCreated', (data) => {
+            roomCode = data.roomCode;
+            document.getElementById('roomCode').textContent = roomCode;
+            showScreen('lobby');
+        });
+
+        // Обновление игроков
+        socket.on('playerJoined', (data) => {
+            updatePlayers(data.players);
+            playSound('join');
+        });
+
+        function updatePlayers(players) {
+            const grid = document.getElementById('playersGrid');
+            document.getElementById('playerCount').textContent = players.length;
+            
+            if (players.length === 0) {
+                grid.innerHTML = `
+                    <div class="waiting-player">
+                        <div class="waiting-icon">⏳</div>
+                        <div class="waiting-text">Ожидание игроков...</div>
+                    </div>
+                `;
+            } else {
+                grid.innerHTML = players.map((p, i) => `
+                    <div class="player-item" style="animation-delay: ${i * 0.1}s">
+                        <div class="player-avatar-big">${p.avatar}</div>
+                        <div class="player-name">${p.name}</div>
+                        <div class="player-status">✅ Готов</div>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('startGameBtn').disabled = players.length < 2;
+        }
+
+        // Начало игры
+        function startGame() {
+            socket.emit('startGame');
+        }
+
+        socket.on('gameStarted', (data) => {
+            showScreen('question');
+            document.getElementById('questionText').textContent = data.question;
+            document.getElementById('currentRound').textContent = data.round;
+            document.getElementById('totalRounds').textContent = data.total;
+            document.getElementById('totalPlayers').textContent = data.total;
+            playSound('start');
+        });
+
+        // Прогресс ответов
+        socket.on('answerProgress', (data) => {
+            document.getElementById('answeredCount').textContent = data.current;
+            const percent = (data.current / data.total) * 100;
+            document.getElementById('answerProgressBar').style.width = percent + '%';
+            playSound('submit');
+        });
+
+        // Голосование
+        socket.on('votingStarted', (data) => {
+            showScreen('voting');
+            document.getElementById('votingQuestion').textContent = data.question;
+            document.getElementById('totalVoters').textContent = data.answers.length;
+            
+            const showcase = document.getElementById('answersShowcase');
+            showcase.innerHTML = data.answers.map((a, i) => `
+                <div class="answer-option" style="animation-delay: ${i * 0.15}s">
+                    <div class="answer-number">${i + 1}</div>
+                    <div class="answer-content">
+                        <div class="answer-text-big">${a.text}</div>
+                    </div>
+                </div>
+            `).join('');
+            playSound('voting');
+        });
+
+        socket.on('voteProgress', (data) => {
+            document.getElementById('votedCount').textContent = data.current;
+            const percent = (data.current / data.total) * 100;
+            document.getElementById('voteProgressBar').style.width = percent + '%';
+        });
+
+        // Результаты
+        socket.on('roundResults', (results) => {
+            showScreen('results');
+            const podium = document.getElementById('resultsPodium');
+            
+            podium.innerHTML = results.map((r, i) => `
+                <div class="result-row rank-${i + 1}" style="animation-delay: ${i * 0.2}s">
+                    <div class="result-position">
+                        ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                    </div>
+                    <div class="result-player-info">
+                        <span class="result-avatar">${r.avatar}</span>
+                        <span class="result-name">${r.name}</span>
+                    </div>
+                    <div class="result-answer-text">"${r.answer}"</div>
+                    <div class="result-votes-display">
+                        <span class="votes-num">${r.votes}</span>
+                        <span class="votes-label">голосов</span>
+                    </div>
+                    <div class="result-score-display">${r.score}</div>
+                </div>
+            `).join('');
+            playSound('results');
+        });
+
+        function nextRound() {
+            socket.emit('nextRound');
+        }
+
+        socket.on('newRound', (data) => {
+            showScreen('question');
+            document.getElementById('questionText').textContent = data.question;
+            document.getElementById('currentRound').textContent = data.round;
+            document.getElementById('answeredCount').textContent = '0';
+            document.getElementById('answerProgressBar').style.width = '0%';
+            playSound('start');
+        });
+
+        // Финал
+        socket.on('gameFinished', (scores) => {
+            showScreen('final');
+            const podium = document.getElementById('finalPodium');
+            
+            podium.innerHTML = scores.slice(0, 3).map((s, i) => `
+                <div class="final-place place-${i + 1}">
+                    <div class="final-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</div>
+                    <div class="final-avatar">${s.avatar}</div>
+                    <div class="final-name">${s.name}</div>
+                    <div class="final-score">${s.score} очков</div>
+                </div>
+            `).join('');
+            playSound('winner');
+        });
+
+        socket.on('playerLeft', (data) => {
+            updatePlayers(data.players);
+        });
+
+        socket.on('hostLeft', () => {
+            alert('Хост покинул игру!');
+            location.reload();
+        });
+
+        // Переключение экранов
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Простые звуки
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            const sounds = {
+                join: [800, 0.1],
+                start: [600, 0.2],
+                submit: [1000, 0.1],
+                voting: [700, 0.15],
+                results: [900, 0.2],
+                winner: [1200, 0.3]
+            };
+            
+            const [freq, duration] = sounds[type] || [500, 0.1];
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            osc.start(audioContext.currentTime);
+            osc.stop(audioContext.currentTime + duration);
+        }
+    </script>
+</body>
+</html>

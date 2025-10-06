@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Смехлыст - Игрок</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="player-body">
+    <div class="mobile-container">
+        
+        <!-- ПОДКЛЮЧЕНИЕ -->
+        <div id="join" class="mobile-screen active">
+            <div class="mobile-header">
+                <h1 class="mobile-logo">🎭 СМЕХЛЫСТ</h1>
+            </div>
+            
+            <div class="join-card">
+                <div class="input-group">
+                    <label class="input-label">Код комнаты</label>
+                    <input type="text" id="roomCodeInput" class="mobile-input code-input" 
+                           placeholder="XXXX" maxlength="4" autocomplete="off">
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Ваше имя</label>
+                    <input type="text" id="playerNameInput" class="mobile-input" 
+                           placeholder="Введите имя" maxlength="15" autocomplete="off">
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Выберите аватар</label>
+                    <div class="avatar-picker" id="avatarPicker">
+                        <button class="avatar-option active" data-avatar="😀">😀</button>
+                        <button class="avatar-option" data-avatar="😎">😎</button>
+                        <button class="avatar-option" data-avatar="🤓">🤓</button>
+                        <button class="avatar-option" data-avatar="😺">😺</button>
+                        <button class="avatar-option" data-avatar="🦊">🦊</button>
+                        <button class="avatar-option" data-avatar="🐶">🐶</button>
+                        <button class="avatar-option" data-avatar="🐼">🐼</button>
+                        <button class="avatar-option" data-avatar="🦁">🦁</button>
+                        <button class="avatar-option" data-avatar="🤡">🤡</button>
+                        <button class="avatar-option" data-avatar="👽">👽</button>
+                        <button class="avatar-option" data-avatar="🤖">🤖</button>
+                        <button class="avatar-option" data-avatar="👾">👾</button>
+                    </div>
+                </div>
+
+                <button class="mobile-button primary" onclick="joinGame()">
+                    Присоединиться
+                </button>
+            </div>
+        </div>
+
+        <!-- ОЖИДАНИЕ -->
+        <div id="waiting" class="mobile-screen">
+            <div class="status-card">
+                <div class="status-icon success">✅</div>
+                <h2 class="status-title">Вы в игре!</h2>
+                <div class="player-display" id="playerDisplay"></div>
+                
+                <div class="dots-animation">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                
+                <p class="status-text">Ожидание начала игры...</p>
+            </div>
+        </div>
+
+        <!-- ОТВЕТ -->
+        <div id="answering" class="mobile-screen">
+            <div class="question-card-mobile">
+                <div class="question-icon-mobile">❓</div>
+                <h3 class="question-text-mobile" id="mobileQuestion"></h3>
+            </div>
+
+            <div class="answer-input-card">
+                <textarea id="answerTextarea" class="answer-textarea" 
+                          placeholder="Введите самый смешной ответ..." 
+                          maxlength="100"></textarea>
+                <div class="char-count">
+                    <span id="charCount">0</span>/100
+                </div>
+                <button class="mobile-button success big-btn" onclick="submitAnswer()">
+                    📤 Отправить
+                </button>
+            </div>
+        </div>
+
+        <!-- ОТПРАВЛЕНО -->
+        <div id="submitted" class="mobile-screen">
+            <div class="status-card">
+                <div class="status-icon success pulse">✨</div>
+                <h2 class="status-title">Ответ отправлен!</h2>
+                
+                <div class="answer-preview-card">
+                    <p class="preview-label">Ваш ответ:</p>
+                    <p class="preview-text" id="previewText"></p>
+                </div>
+
+                <div class="dots-animation">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                
+                <p class="status-text">Ждём остальных...</p>
+            </div>
+        </div>
+
+        <!-- ГОЛОСОВАНИЕ -->
+        <div id="voting" class="mobile-screen">
+            <div class="vote-header">
+                <h2 class="vote-title-mobile">🗳️ Голосуйте!</h2>
+                <p class="vote-question-mobile" id="voteQuestion"></p>
+            </div>
+
+            <div class="vote-options" id="voteOptions"></div>
+        </div>
+
+        <!-- ГОЛОС ОТДАН -->
+        <div id="voted" class="mobile-screen">
+            <div class="status-card">
+                <div class="status-icon success pulse">🗳️</div>
+                <h2 class="status-title">Голос принят!</h2>
+                
+                <div class="dots-animation">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                
+                <p class="status-text">Ждём результаты...</p>
+            </div>
+        </div>
+
+        <!-- РЕЗУЛЬТАТЫ -->
+        <div id="results" class="mobile-screen">
+            <div class="my-result-card" id="myResult"></div>
+        </div>
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let selectedAvatar = '😀';
+        let playerId = null;
+
+        // Выбор аватара
+        document.querySelectorAll('.avatar-option').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.avatar-option').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedAvatar = this.dataset.avatar;
+            });
+        });
+
+        // Автоматический переход к имени после кода
+        document.getElementById('roomCodeInput').addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase();
+            if (this.value.length === 4) {
+                document.getElementById('playerNameInput').focus();
+            }
+        });
+
+        // Подсчет символов
+        document.getElementById('answerTextarea')?.addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+
+        // Присоединение
+        function joinGame() {
+            const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            const name = document.getElementById('playerNameInput').value.trim();
+
+            if (!roomCode || roomCode.length !== 4) {
+                alert('Введите код комнаты (4 символа)');
+                return;
+            }
+
+            if (!name) {
+                alert('Введите ваше имя');
+                return;
+            }
+
+            socket.emit('joinGame', { roomCode, name, avatar: selectedAvatar });
+        }
+
+        socket.on('joinSuccess', (player) => {
+            playerId = player.id;
+            document.getElementById('playerDisplay').innerHTML = `
+                <div class="player-avatar-display">${player.avatar}</div>
+                <div class="player-name-display">${player.name}</div>
+            `;
+            showScreen('waiting');
+            vibrate();
+        });
+
+        socket.on('error', (msg) => {
+            alert(msg);
+        });
+
+        // Начало игры
+        socket.on('gameStarted', (data) => {
+            document.getElementById('mobileQuestion').textContent = data.question;
+            document.getElementById('answerTextarea').value = '';
+            document.getElementById('charCount').textContent = '0';
+            showScreen('answering');
+            vibrate();
+        });
+
+        // Отправка ответа
+        function submitAnswer() {
+            const answer = document.getElementById('answerTextarea').value.trim();
+            if (!answer) {
+                alert('Введите ответ!');
+                return;
+            }
+
+            socket.emit('submitAnswer', answer);
+            document.getElementById('previewText').textContent = answer;
+            showScreen('submitted');
+            vibrate();
+        }
+
+        // Голосование
+        socket.on('votingStarted', (data) => {
+            document.getElementById('voteQuestion').textContent = data.question;
+            
+            const options = document.getElementById('voteOptions');
+            options.innerHTML = data.answers.map(a => `
+                <button class="vote-option-btn" onclick="vote('${a.id}')">
+                    <div class="vote-option-text">${a.text}</div>
+                </button>
+            `).join('');
+            
+            showScreen('voting');
+            vibrate();
+        });
+
+        function vote(answerId) {
+            if (answerId === playerId) {
+                alert('Нельзя голосовать за свой ответ!');
+                return;
+            }
+            socket.emit('vote', answerId);
+            showScreen('voted');
+            vibrate();
+        }
+
+        // Результаты
+        socket.on('roundResults', (results) => {
+            const myResult = results.find(r => r.id === playerId);
+            if (myResult) {
+                const isWinner = results[0].id === playerId;
+                document.getElementById('myResult').innerHTML = `
+                    <div class="result-icon">${isWinner ? '🏆' : myResult.votes > 0 ? '🎉' : '😅'}</div>
+                    <h3 class="result-title">${isWinner ? 'Вы победили!' : 'Ваш результат'}</h3>
+                    <div class="result-answer-display">"${myResult.answer}"</div>
+                    <div class="result-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">${myResult.votes}</div>
+                            <div class="stat-label">голосов</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${myResult.score}</div>
+                            <div class="stat-label">очков</div>
+                        </div>
+                    </div>
+                `;
+                
+                if (isWinner) vibrate([100, 50, 100, 50, 200]);
+            }
+            showScreen('results');
+        });
+
+        socket.on('newRound', (data) => {
+            document.getElementById('mobileQuestion').textContent = data.question;
+            document.getElementById('answerTextarea').value = '';
+            document.getElementById('charCount').textContent = '0';
+            showScreen('answering');
+            vibrate();
+        });
+
+        socket.on('gameFinished', () => {
+            setTimeout(() => {
+                alert('Игра окончена! Спасибо за игру!');
+                showScreen('join');
+            }, 5000);
+        });
+
+        socket.on('hostLeft', () => {
+            alert('Хост покинул игру!');
+            location.reload();
+        });
+
+        // Переключение экранов
+        function showScreen(screenId) {
+            document.querySelectorAll('.mobile-screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Вибрация
+        function vibrate(pattern = 50) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        }
+    </script>
+</body>
+</html>
